@@ -1,7 +1,7 @@
-local M = {
-}
+local M = {}
 
 M.config = {
+  prettier_path = "prettier",
   mappings = {
     show_diagnostic = "L",
     goto_next = ";j",
@@ -10,33 +10,34 @@ M.config = {
 }
 
 local function format_type(type)
-  -- Replacing { ...; } by { [key: string]: '@@@' }
-  type = type:gsub('{ %.%.%.; }', 'Record<string, "@@@">')
+  -- Replacing non-ts formations by "@ ... @".
+  -- Otherwise, prettier will not be able to format the type.
 
-  -- Replacing [...] by [ '@@@' ]
-  type = type:gsub('%[%.%.%.%]', '[ "@@@" ]')
+  type = type:gsub('{ %.%.%.; }', '"@{ ...; }@"')
+  type = type:gsub('%[%.%.%.%]', '"@[...]@"')
+  type = type:gsub('%.%.%. %d+ more %.%.%.', '"@ ... @"')
+  type = type:gsub('<%.%.%.>', '<"@...@">')
 
-  -- Removing /tmp/diagnostic.ts
-  vim.fn.delete('/tmp/diagnostic.ts')
+  local tmp_file = vim.fn.tempname()
+  print(tmp_file)
+
   -- Putting the type in /tmp/diagnostic.ts
-  vim.fn.writefile({'type A = ' .. type}, '/tmp/diagnostic.ts', 'a')
+  vim.fn.writefile({'type A = ' .. type}, tmp_file, 'a')
 
   -- Running prettier on /tmp/diagnostic.ts
-  local result = vim.fn.system('prettier --write /tmp/diagnostic.ts')
+  local result = vim.fn.system(M.config.prettier_path .. ' --parser typescript --write ' .. tmp_file)
 
   -- Getting the result
-  local formatted_type = vim.fn.readfile('/tmp/diagnostic.ts')
+  local formatted_type = vim.fn.readfile(tmp_file)
 
   local result = vim.fn.join(formatted_type, '\n')
 
   -- Stripping the prefix
   result = result:gsub('type A = ', '')
 
-  -- Replacing back '@@@' to { ...; }
-  result = result:gsub('Record<string, "@@@">', '{ ...; }')
-
-  -- Replacing back '@@@' to [ '@@@' ]
-  result = result:gsub('%["@@@"%]', '[...]')
+  -- Replacing back the non-ts formations
+  result = result:gsub('"@', '')
+  result = result:gsub('@"', '')
   
   return result
 end
@@ -95,10 +96,6 @@ function M.show_diagnostic()
   vim.api.nvim_buf_set_option(bufnr, 'filetype', 'markdown')
   -- Setting conceallevel to 3
   vim.api.nvim_buf_set_option(bufnr, 'conceallevel', 3)
-  -- Setting background color
-  vim.api.nvim_buf_set_option(bufnr, 'winhighlight', 'Normal:FloatBackground,Normal:FloatBackground')
-
-  vim.api.nvim_set_hl(0, 'FloatBackground', { bg='#343434' })
 
   vim.cmd('hi link DiagnosticFloatingError None')
   vim.cmd('hi link DiagnosticFloatingHint None')
