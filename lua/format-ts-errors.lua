@@ -19,7 +19,6 @@ local function format_type(type)
   type = type:gsub('<%.%.%.>', '<"@...@">')
 
   local tmp_file = vim.fn.tempname()
-  print(tmp_file)
 
   -- Putting the type in /tmp/diagnostic.ts
   vim.fn.writefile({'type A = ' .. type}, tmp_file, 'a')
