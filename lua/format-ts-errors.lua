@@ -90,6 +90,10 @@ function M.show_diagnostic()
     severity_sort = true,
     format = parse_diagnostic
   })
+  
+  if bufnr == 0 or bufnr == nil then
+    return
+  end
 
   -- Changing filetype to markdown
   vim.api.nvim_buf_set_option(bufnr, 'filetype', 'markdown')
@@ -103,6 +107,10 @@ function M.show_diagnostic()
 end
 
 function M.goto_next()
+  local diagnostics = vim.diagnostic.get()
+  if #diagnostics == 0 then
+    return
+  end
   vim.diagnostic.goto_next({
     float = false
   })
@@ -112,6 +120,10 @@ function M.goto_next()
 end
 
 function M.goto_prev()
+  local diagnostics = vim.diagnostic.get()
+  if #diagnostics == 0 then
+    return
+  end
   vim.diagnostic.goto_prev({
     float = false
   })
