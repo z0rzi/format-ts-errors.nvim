@@ -1,15 +1,12 @@
 # format-ts-errors.nvim
 
-A very simple Neovim plugin to format TypeScript errors.
-
-## How it looks
-
-![big](./imgs/diagnostic_1.png)
-![small](./imgs/diagnostic_2.png)
+A very simple Neovim plugin to explain your errors using AI.
 
 ## Requirements
 
-This plugin uses `prettier` to format the types.
+This plugin uses `curl` to call the Anthropic API.
+
+You will also need an Anthropic API key.
 
 ## Installation
 
@@ -17,17 +14,16 @@ Using Lazy.nvim:
 ```lua
 {
     'z0rzi/format-ts-errors.nvim',
-    dependencies = {
-        'nvim-treesitter/nvim-treesitter' -- For types highlighting, optional
-    },
     config = function()
         require('format-ts-errors').setup({
-            prettier_path = "prettier",
             mappings = {
                 show_diagnostic = "L", -- Show the diagnostic under the cursor
+                show_AI_diagnostic = ";h", -- Asks Claude to explain the diagnostic under the cursor
                 goto_next = ";j", -- Go to the next diagnostic
                 goto_prev = ";k", -- Go to the previous diagnostic
             },
+
+            anthropic_api_key = nil, -- You can also define it as an environment variable (ANTHROPIC_API_KEY)
         })
 
         -- Optional, to enable highlighting of the types (requires treesitter)
@@ -36,13 +32,7 @@ Using Lazy.nvim:
 },
 ```
 
-
 ## How it works
 
-This plugin uses the `format` option of the `vim.diagnostic.open_float` function, to:
-
-1. Get the diagnostic message
-2. Identify the parts of the message which are types
-3. Format the types using `prettier`
-4. Place the formatted types in markdown code blocks
-5. Send the formatted message to the native `vim.diagnostic.open_float`
+This plugin uses the Anthropic API to generate a comprehensive explanation of the error under the cursor.
+If you hit the `show_AI_diagnostic` keymap, multiple times in a row, you can ask follow-up questions to the AI.
